@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified Learning for Rural Education</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        indigo: {
+                            950: '#130E2A',
+                            900: '#1C1440',
+                            800: '#2A1F5C',
+                            700: '#3A2E78',
+                        },
+                        coral: '#FF7A85',
+                        gold: '#FFB800',
+                        mint: '#2ECC71',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Fredoka', 'cursive'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #130E2A 0%, #1C1440 50%, #2A1F5C 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card-hover:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 14px 38px rgba(255, 122, 133, 0.2);
+        }
+
+        .glow-gold { box-shadow: 0 0 20px rgba(255, 184, 0, 0.4); }
+        .glow-coral { box-shadow: 0 0 20px rgba(255, 122, 133, 0.4); }
+        .glow-mint { box-shadow: 0 0 20px rgba(46, 204, 113, 0.4); }
+
+        /* Print Media Formatting */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #printable-worksheet, #printable-worksheet *,
+            #printable-certificate, #printable-certificate * {
+                visibility: visible !important;
+                color: #000000 !important;
+            }
+            #printable-worksheet, #printable-certificate {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                background: #ffffff !important;
+                padding: 20px !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100 relative selection:bg-coral selection:text-white">
+
+    <header class="sticky top-0 z-40 bg-indigo-950/80 backdrop-blur-md border-b border-white/10 px-4 lg:px-8 py-3 transition-all duration-300">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('landing')">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-coral via-gold to-mint flex items-center justify-center text-indigo-950 text-xl font-black shadow-lg">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-lg md:text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-coral">
+                        RuralEdu <span class="text-gold font-normal text-xs px-2 py-0.5 rounded-full bg-white/10 border border-white/10 ml-1">Offline First</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-300 hidden sm:block">Gamified Learning Platform</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <button onclick="openGlobalWorksheetSelector()" class="px-3 py-1.5 rounded-xl bg-mint/20 border border-mint/30 text-mint text-xs font-bold hover:bg-mint/30 transition-all flex items-center space-x-1.5" title="Generate Offline Paper Worksheet">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    <span class="hidden md:inline">Print Worksheets</span>
+                </button>
+
+                <div class="flex items-center space-x-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-xs font-semibold">
+                    <div class="flex items-center text-gold" title="Total Village Stars">
+                        <i class="fa-solid fa-star mr-1 animate-pulse"></i>
+                        <span id="global-stars">0</span>
+                    </div>
+                    <div class="h-3 w-px bg-white/20"></div>
+                    <div class="flex items-center text-coral" title="XP Points">
+                        <i class="fa-solid fa-bolt mr-1"></i>
+                        <span id="global-xp">0</span> XP
+                    </div>
+                </div>
+
+                <button id="speech-toggle-btn" onclick="toggleAudioGuide()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-gold transition-all" title="Toggle Speech Audio Assistant">
+                    <i id="speech-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+
+                <button onclick="openModal('leaderboard-modal')" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-mint transition-all" title="Leaderboard & Badges">
+                    <i class="fa-solid fa-trophy"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 flex flex-col justify-center">
+
+        <section id="view-landing" class="space-y-12 my-auto transition-all duration-500">
+            <div class="text-center space-y-6 max-w-3xl mx-auto pt-4">
+                <div class="inline-flex items-center space-x-2 bg-coral/20 border border-coral/30 px-4 py-1.5 rounded-full text-coral text-xs font-semibold uppercase tracking-wider">
+                    <i class="fa-solid fa-heart"></i>
+                    <span>Making Education Interactive, Accessible & Enjoyable</span>
+                </div>
+                <h1 class="font-display text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                    Gamified Learning for <span class="bg-gradient-to-r from-coral via-gold to-mint bg-clip-text text-transparent">Rural Education</span>
+                </h1>
+                <p class="text-base md:text-lg text-slate-300 leading-relaxed">
+                    Offline-ready interactive learning platform for Nursery through Class 6. Play 6 dynamic game engines, take Grade Final Exams, and generate offline paper worksheets for low-tech classrooms.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                    <button onclick="navigateTo('grades')" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-coral to-gold font-display font-bold text-lg text-indigo-950 hover:brightness-110 shadow-lg shadow-coral/25 transform hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-3">
+                        <i class="fa-solid fa-rocket text-xl"></i>
+                        <span>Start Learning Now</span>
+                    </button>
+                    <button onclick="openGlobalWorksheetSelector()" class="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 font-display font-semibold text-slate-200 transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-print text-mint"></i>
+                        <span>Print Offline Worksheets</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-6">
+                <div class="glass-card p-6 rounded-3xl space-y-3 border-t-2 border-t-coral">
+                    <div class="w-12 h-12 rounded-2xl bg-coral/20 text-coral flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-book-open-reader"></i>
+                    </div>
+                    <h3 class="font-display font-bold text-lg text-white">Multi-Chapter Subjects</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Comprehensive chapters per subject for Nursery to Class 6 with full question pools.</p>
+                </div>
+
+                <div class="glass-card p-6 rounded-3xl space-y-3 border-t-2 border-t-gold">
+                    <div class="w-12 h-12 rounded-2xl bg-gold/20 text-gold flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                    <h3 class="font-display font-bold text-lg text-white">Grand Final Exams</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Timed grade assessments with question navigator and official printable certificates.</p>
+                </div>
+
+                <div class="glass-card p-6 rounded-3xl space-y-3 border-t-2 border-t-mint">
+                    <div class="w-12 h-12 rounded-2xl bg-mint/20 text-mint flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-gamepad"></i>
+                    </div>
+                    <h3 class="font-display font-bold text-lg text-white">6 Universal Mini-Games</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Play Quests, Tile Match, Card Memory, Master Quiz, Fill-Puzzle, and Creative Canvas.</p>
+                </div>
+
+                <div class="glass-card p-6 rounded-3xl space-y-3 border-t-2 border-t-purple-400">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-print"></i>
+                    </div>
+                    <h3 class="font-display font-bold text-lg text-white">Paper Worksheets</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">Generate 10-30 question paper worksheets with answer keys for zero-tech classrooms.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-grades" class="hidden space-y-8 transition-all duration-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-display text-2xl md:text-3xl font-extrabold text-white">Select Grade Level</h2>
+                    <p class="text-sm text-slate-300">Choose a class to explore subjects, chapters, and final exams</p>
+                </div>
+                <button onclick="navigateTo('landing')" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-slate-200 transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to Home</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Pre-Primary -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-2 text-coral font-display font-bold text-sm tracking-wide uppercase">
+                        <i class="fa-solid fa-shapes"></i>
+                        <span>Pre-Primary (Early Childhood)</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3" id="grade-list-preprimary"></div>
+                </div>
+
+                <!-- Lower Primary -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-2 text-gold font-display font-bold text-sm tracking-wide uppercase">
+                        <i class="fa-solid fa-book-open"></i>
+                        <span>Lower Primary (Classes 1 - 3)</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3" id="grade-list-lowerprimary"></div>
+                </div>
+
+                <!-- Upper Primary -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-2 text-mint font-display font-bold text-sm tracking-wide uppercase">
+                        <i class="fa-solid fa-flask"></i>
+                        <span>Upper Primary (Classes 4 - 6)</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3" id="grade-list-upperprimary"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-subjects" class="hidden space-y-8 transition-all duration-500">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span id="current-grade-badge" class="px-3 py-1 rounded-full bg-coral/20 text-coral text-xs font-bold border border-coral/30">Class</span>
+                        <h2 class="font-display text-2xl md:text-3xl font-extrabold text-white">Subject & Chapter Dashboard</h2>
+                    </div>
+                    <p class="text-sm text-slate-300 mt-1">Select a chapter to launch games, or print full worksheets and take Final Exams!</p>
+                </div>
+                
+                <div class="flex items-center space-x-3 flex-wrap gap-2">
+                    <button onclick="generateGradeFinalExamWorksheet()" class="px-4 py-2.5 rounded-xl bg-mint/20 hover:bg-mint/30 border border-mint/30 text-xs font-bold text-mint transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Exam Worksheet</span>
+                    </button>
+                    <button onclick="startGradeFinalExam()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-gold via-coral to-mint text-indigo-950 font-display font-extrabold text-xs shadow-lg hover:brightness-110 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-graduation-cap text-sm"></i>
+                        <span>Take Final Exam</span>
+                    </button>
+                    <button onclick="navigateTo('grades')" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-slate-200 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Change Grade</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Subject Selection Filter Pills -->
+            <div id="subject-pills-container" class="flex flex-wrap gap-2 pb-2"></div>
+
+            <!-- Chapters Grid -->
+            <div id="chapters-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <section id="view-game-hub" class="hidden space-y-8 transition-all duration-500">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span id="game-hub-subject-badge" class="px-3 py-1 rounded-full bg-mint/20 text-mint text-xs font-bold border border-mint/30">Subject</span>
+                        <span id="game-hub-chapter-badge" class="px-3 py-1 rounded-full bg-gold/20 text-gold text-xs font-bold border border-gold/30">Chapter</span>
+                    </div>
+                    <h2 id="game-hub-title" class="font-display text-2xl md:text-3xl font-extrabold text-white mt-1">Select Game Mode</h2>
+                    <p class="text-sm text-slate-300">Choose how you want to play and learn this chapter!</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openCurrentChapterWorksheet()" class="px-4 py-2 rounded-xl bg-mint/20 hover:bg-mint/30 border border-mint/30 text-xs font-bold text-mint transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Chapter Worksheet</span>
+                    </button>
+                    <button onclick="navigateTo('subjects')" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-slate-200 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Back</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 6 Universal Game Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Mode 1 -->
+                <div onclick="launchGameMode(1)" class="glass-card glass-card-hover p-6 rounded-3xl border-t-4 border-t-coral cursor-pointer flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-coral/20 text-coral flex items-center justify-center text-xl font-black">
+                                <i class="fa-solid fa-compass"></i>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-full bg-coral/20 text-coral">Mode 1</span>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white">The Explorer's Quest</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">Interactive village adventure! Solve chapter puzzles to help village farmers cross rivers and open gates.</p>
+                    </div>
+                    <div class="pt-2 flex items-center justify-between text-xs font-bold text-coral">
+                        <span>Play Adventure</span>
+                        <i class="fa-solid fa-circle-play text-lg"></i>
+                    </div>
+                </div>
+
+                <!-- Mode 2 -->
+                <div onclick="launchGameMode(2)" class="glass-card glass-card-hover p-6 rounded-3xl border-t-4 border-t-gold cursor-pointer flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-gold/20 text-gold flex items-center justify-center text-xl font-black">
+                                <i class="fa-solid fa-grip-vertical"></i>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-full bg-gold/20 text-gold">Mode 2</span>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white">Village Carnival Match</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">Pair up terms, figures, and definitions on carnival ticket tiles to earn village stars.</p>
+                    </div>
+                    <div class="pt-2 flex items-center justify-between text-xs font-bold text-gold">
+                        <span>Play Tile Match</span>
+                        <i class="fa-solid fa-circle-play text-lg"></i>
+                    </div>
+                </div>
+
+                <!-- Mode 3 -->
+                <div onclick="launchGameMode(3)" class="glass-card glass-card-hover p-6 rounded-3xl border-t-4 border-t-mint cursor-pointer flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-mint/20 text-mint flex items-center justify-center text-xl font-black">
+                                <i class="fa-solid fa-clone"></i>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-full bg-mint/20 text-mint">Mode 3</span>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white">Memory Treasure Hunt</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">Flip face-down cards to match twin chapter concepts, formulas, and symbols.</p>
+                    </div>
+                    <div class="pt-2 flex items-center justify-between text-xs font-bold text-mint">
+                        <span>Flip Memory Cards</span>
+                        <i class="fa-solid fa-circle-play text-lg"></i>
+                    </div>
+                </div>
+
+                <!-- Mode 4 -->
+                <div onclick="launchGameMode(4)" class="glass-card glass-card-hover p-6 rounded-3xl border-t-4 border-t-purple-400 cursor-pointer flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-xl font-black">
+                                <i class="fa-solid fa-bolt-lightning"></i>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-full bg-purple-400/20 text-purple-300">Mode 4</span>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white">Master Quiz Battle</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">Fast arcade trivia battle against Chhota Bot! Use 50:50 and Time Freeze power-ups.</p>
+                    </div>
+                    <div class="pt-2 flex items-center justify-between text-xs font-bold text-purple-300">
+                        <span>Battle Mascot</span>
+                        <i class="fa-solid fa-circle-play text-lg"></i>
+                    </div>
+                </div>
+
+                <!-- Mode 5 -->
+                <div onclick="launchGameMode(5)" class="glass-card glass-card-hover p-6 rounded-3xl border-t-4 border-t-blue-400 cursor-pointer flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-300 flex items-center justify-center text-xl font-black">
+                                <i class="fa-solid fa-puzzle-piece"></i>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-full bg-blue-400/20 text-blue-300">Mode 5</span>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white">Fill-the-Puzzle Builder</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">Drag missing numbers, words, and terms into blank slots to complete chapter equations.</p>
+                    </div>
+                    <div class="pt-2 flex items-center justify-between text-xs font-bold text-blue-300">
+                        <span>Drag & Fill Slots</span>
+                        <i class="fa-solid fa-circle-play text-lg"></i>
+                    </div>
+                </div>
+
+                <!-- Mode 6 -->
+                <div onclick="launchGameMode(6)" class="glass-card glass-card-hover p-6 rounded-3xl border-t-4 border-t-pink-400 cursor-pointer flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-300 flex items-center justify-center text-xl font-black">
+                                <i class="fa-solid fa-palette"></i>
+                            </div>
+                            <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-full bg-pink-400/20 text-pink-300">Mode 6</span>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white">Creative Canvas & Builder</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">Hands-on creative sketch playground! Draw, color, and build shapes related to the lesson.</p>
+                    </div>
+                    <div class="pt-2 flex items-center justify-between text-xs font-bold text-pink-300">
+                        <span>Launch Canvas</span>
+                        <i class="fa-solid fa-circle-play text-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-game-player" class="hidden space-y-6 transition-all duration-500">
+            <div class="glass-card p-4 rounded-2xl flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center space-x-3">
+                    <button onclick="exitGameEngine()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-slate-200 transition-all flex items-center space-x-1.5">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Exit Game</span>
+                    </button>
+                    <div>
+                        <h3 id="active-game-title" class="font-display font-bold text-base text-white">Game Title</h3>
+                        <p id="active-game-chapter" class="text-[11px] text-slate-300">Chapter Name</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4 text-xs font-semibold">
+                    <div class="bg-indigo-950/60 px-3 py-1.5 rounded-xl border border-white/10 flex items-center space-x-1.5 text-gold">
+                        <i class="fa-solid fa-star"></i>
+                        <span id="game-score">0</span>
+                    </div>
+                    <div class="bg-indigo-950/60 px-3 py-1.5 rounded-xl border border-white/10 flex items-center space-x-1.5 text-coral">
+                        <i class="fa-solid fa-fire"></i>
+                        <span>Streak: <span id="game-streak">0</span></span>
+                    </div>
+                    <button onclick="speakCurrentQuestionInstruction()" class="bg-gold/20 border border-gold/30 text-gold px-3 py-1.5 rounded-xl hover:bg-gold/30 transition-all flex items-center space-x-1">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span class="hidden sm:inline">Listen</span>
+                    </button>
+                    <button onclick="showGameHint()" class="bg-mint/20 border border-mint/30 text-mint px-3 py-1.5 rounded-xl hover:bg-mint/30 transition-all flex items-center space-x-1">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span class="hidden sm:inline">Hint</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="game-canvas-container" class="glass-card p-6 rounded-3xl min-h-[450px] relative flex flex-col justify-between overflow-hidden border border-white/15">
+                <!-- Dynamic engine template injects here -->
+            </div>
+        </section>
+
+        <section id="view-final-exam" class="hidden space-y-6 transition-all duration-500">
+            <div class="glass-card p-4 rounded-2xl flex items-center justify-between flex-wrap gap-4 border border-gold/40">
+                <div class="flex items-center space-x-3">
+                    <button onclick="exitExamPrompt()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-xmark"></i>
+                        <span>Exit Exam</span>
+                    </button>
+                    <div>
+                        <h3 id="exam-grade-title" class="font-display font-bold text-base text-white">Grade Final Exam</h3>
+                        <p class="text-[11px] text-gold font-semibold">Grand Finale Assessment</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="bg-indigo-950/80 px-4 py-2 rounded-xl border border-gold/40 text-gold font-mono font-bold text-base flex items-center space-x-2">
+                        <i class="fa-solid fa-clock animate-pulse"></i>
+                        <span id="exam-timer-display">12:00</span>
+                    </div>
+                    <button id="exam-pause-btn" onclick="toggleExamTimer()" class="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs">
+                        <i id="exam-pause-icon" class="fa-solid fa-pause"></i>
+                    </button>
+                    <button onclick="speakExamQuestion()" class="p-2.5 rounded-xl bg-gold/20 text-gold border border-gold/30 text-xs">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div class="lg:col-span-3 glass-card p-6 rounded-3xl space-y-6 flex flex-col justify-between border border-white/15 min-h-[420px]">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                            <span id="exam-q-subject" class="text-xs font-bold px-3 py-1 rounded-full bg-coral/20 text-coral border border-coral/30">Subject</span>
+                            <span id="exam-q-number" class="text-xs text-slate-300 font-bold">Question 1 of 10</span>
+                        </div>
+
+                        <h3 id="exam-q-text" class="font-display font-bold text-xl text-white leading-relaxed">Question text...</h3>
+
+                        <div id="exam-options-container" class="grid grid-cols-1 gap-3 pt-2"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between border-t border-white/10 pt-4 flex-wrap gap-3">
+                        <button onclick="markExamForReview()" id="exam-mark-btn" class="px-4 py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-400/30 text-xs font-bold flex items-center space-x-2">
+                            <i class="fa-solid fa-bookmark"></i>
+                            <span>Mark for Review</span>
+                        </button>
+
+                        <div class="flex items-center space-x-3">
+                            <button onclick="navigateExamQuestion(-1)" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white">Previous</button>
+                            <button onclick="navigateExamQuestion(1)" class="px-5 py-2 rounded-xl bg-coral hover:bg-coral/90 text-xs font-bold text-indigo-950">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-5 rounded-3xl space-y-4 border border-white/15 h-fit">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-display font-bold text-sm text-white">Question Palette</h4>
+                        <span id="exam-answered-count" class="text-[11px] font-bold text-mint">0 / 10 Answered</span>
+                    </div>
+
+                    <div id="exam-palette-grid" class="grid grid-cols-5 gap-2"></div>
+
+                    <div class="space-y-2 pt-3 border-t border-white/10 text-[11px] text-slate-300">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-md bg-mint"></div>
+                            <span>Answered</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-md bg-purple-400"></div>
+                            <span>Marked for Review</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 rounded-md bg-white/10 border border-white/20"></div>
+                            <span>Unanswered</span>
+                        </div>
+                    </div>
+
+                    <button onclick="submitFinalExam()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-gold to-coral text-indigo-950 font-display font-extrabold text-xs shadow-lg hover:brightness-110 transition-all mt-4">
+                        Submit Final Exam
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- MODAL 1: EXAM REPORT CARD MODAL -->
+    <div id="exam-report-modal" class="fixed inset-0 z-50 bg-indigo-950/85 backdrop-blur-lg hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-2xl w-full p-6 md:p-8 rounded-3xl space-y-6 border border-gold/40 max-h-[90vh] overflow-y-auto">
+            <div class="text-center space-y-2">
+                <div class="w-16 h-16 rounded-full bg-gold/20 text-gold text-3xl flex items-center justify-center mx-auto border-2 border-gold">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h2 class="font-display text-3xl font-extrabold text-white">Exam Completed!</h2>
+                <p class="text-xs text-slate-300">Here is your official performance report card</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 bg-white/5 p-4 rounded-2xl border border-white/10 text-center">
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Overall Score</p>
+                    <p id="report-overall-score" class="text-2xl font-display font-extrabold text-gold">80%</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Grade Rank</p>
+                    <p id="report-grade-rank" class="text-2xl font-display font-extrabold text-mint">1st Division</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Stars Awarded</p>
+                    <p id="report-stars-awarded" class="text-2xl font-display font-extrabold text-coral">+50</p>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h4 class="font-display font-bold text-xs uppercase tracking-wider text-slate-300">Subject Breakdown</h4>
+                <div id="report-subject-breakdown" class="space-y-2 text-xs"></div>
+            </div>
+
+            <div class="space-y-2 bg-indigo-950/60 p-4 rounded-2xl border border-white/10">
+                <label class="block text-xs font-bold text-gold">Student Name for Certificate:</label>
+                <input type="text" id="cert-student-name" placeholder="Enter student full name" class="w-full px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm focus:outline-none focus:border-gold">
+            </div>
+
+            <div class="flex items-center space-x-3 pt-2">
+                <button onclick="closeModal('exam-report-modal'); navigateTo('subjects');" class="flex-1 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs">
+                    Back to Subject Hub
+                </button>
+                <button onclick="generatePrintableCertificate()" class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-coral to-gold text-indigo-950 font-display font-bold text-xs shadow-lg">
+                    Generate Certificate
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: PRINTABLE CERTIFICATE MODAL -->
+    <div id="certificate-modal" class="fixed inset-0 z-50 bg-indigo-950/85 backdrop-blur-lg hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-3xl w-full p-6 md:p-8 rounded-3xl space-y-6 border border-gold/40 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center no-print">
+                <h3 class="font-display font-bold text-lg text-white">Official Certificate Preview</h3>
+                <button onclick="closeModal('certificate-modal')" class="p-2 rounded-xl bg-white/10 text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="printable-certificate" class="bg-amber-50 text-slate-900 p-8 rounded-2xl border-8 border-double border-amber-800 text-center space-y-6 relative">
+                <div class="space-y-2">
+                    <div class="text-4xl text-amber-800"><i class="fa-solid fa-award"></i></div>
+                    <h2 class="text-3xl font-display font-extrabold uppercase tracking-widest text-amber-900">Certificate of Excellence</h2>
+                    <p class="text-xs font-serif italic text-amber-800">Gamified Learning for Rural Education Platform</p>
+                </div>
+
+                <div class="space-y-2 py-4">
+                    <p class="text-sm font-serif italic text-slate-700">This certificate is proudly awarded to</p>
+                    <h3 id="cert-display-name" class="text-3xl font-display font-black text-amber-900 underline decoration-amber-600">Student Name</h3>
+                    <p id="cert-display-grade" class="text-xs font-semibold text-slate-700">For outstanding achievement in Class Final Assessment</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-8 border-t border-amber-800/40 pt-6 text-[11px] text-slate-800">
+                    <div class="text-left space-y-1">
+                        <p class="font-bold">Project Team Members:</p>
+                        <p class="text-[10px]">B. Sreemayi | Ch Jaya Haasika</p>
+                        <p class="text-[10px]">P. V. Srisukta Hiranmayi | Ch. Akshitha Satwika</p>
+                    </div>
+                    <div class="text-right space-y-1">
+                        <p class="font-bold">Supervisor Signature:</p>
+                        <p class="font-serif italic font-bold text-xs text-amber-900">Dr. G. Sudhakar</p>
+                        <p class="text-[10px]">Assoc. Professor, Dept. of CSE</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 no-print">
+                <button onclick="closeModal('certificate-modal')" class="px-5 py-2.5 rounded-xl bg-white/10 text-slate-200 text-xs font-bold">Close</button>
+                <button onclick="window.print()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-coral to-gold text-indigo-950 text-xs font-bold flex items-center space-x-2">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Print Certificate</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: LEADERBOARD MODAL -->
+    <div id="leaderboard-modal" class="fixed inset-0 z-50 bg-indigo-950/80 backdrop-blur-lg hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-lg w-full p-6 md:p-8 rounded-3xl space-y-6 border border-white/20">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-mint/20 text-mint flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                    <h3 class="font-display font-bold text-xl text-white">Classroom Hall of Fame</h3>
+                </div>
+                <button onclick="closeModal('leaderboard-modal')" class="p-2 rounded-xl bg-white/10 text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex border-b border-white/10">
+                <button onclick="switchModalTab('badges')" id="tab-btn-badges" class="pb-2 px-4 border-b-2 border-coral font-bold text-sm text-coral">Unlocked Badges</button>
+                <button onclick="switchModalTab('leaderboard')" id="tab-btn-leaderboard" class="pb-2 px-4 border-b-2 border-transparent font-bold text-sm text-slate-400 hover:text-white">Offline Leaderboard</button>
+            </div>
+
+            <div id="tab-panel-badges" class="grid grid-cols-3 gap-3">
+                <div class="p-3 rounded-2xl bg-white/5 border border-white/10 text-center space-y-2">
+                    <div class="w-10 h-10 rounded-full bg-gold/20 text-gold text-lg flex items-center justify-center mx-auto">
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+                    <p class="text-xs font-bold text-white">Math Wizard</p>
+                    <p class="text-[10px] text-slate-400">Unlocked</p>
+                </div>
+                <div class="p-3 rounded-2xl bg-white/5 border border-white/10 text-center space-y-2">
+                    <div class="w-10 h-10 rounded-full bg-mint/20 text-mint text-lg flex items-center justify-center mx-auto">
+                        <i class="fa-solid fa-seedling"></i>
+                    </div>
+                    <p class="text-xs font-bold text-white">EVS Champion</p>
+                    <p class="text-[10px] text-slate-400">Unlocked</p>
+                </div>
+                <div class="p-3 rounded-2xl bg-white/5 border border-white/10 text-center space-y-2">
+                    <div class="w-10 h-10 rounded-full bg-coral/20 text-coral text-lg flex items-center justify-center mx-auto">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <p class="text-xs font-bold text-white">Exam Scholar</p>
+                    <p class="text-[10px] text-slate-400">Unlocked</p>
+                </div>
+            </div>
+
+            <div id="tab-panel-leaderboard" class="hidden space-y-2">
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-gold/30">
+                    <div class="flex items-center space-x-3">
+                        <span class="font-bold text-gold text-sm">#1</span>
+                        <span class="font-semibold text-white text-sm">Your Student Profile</span>
+                    </div>
+                    <span id="leaderboard-my-stars" class="text-xs font-bold text-gold">0 Stars</span>
+                </div>
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 text-slate-300">
+                    <div class="flex items-center space-x-3">
+                        <span class="font-bold text-slate-400 text-sm">#2</span>
+                        <span class="font-semibold text-sm">Aarav (Grade 3)</span>
+                    </div>
+                    <span class="text-xs font-bold text-gold">140 Stars</span>
+                </div>
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 text-slate-300">
+                    <div class="flex items-center space-x-3">
+                        <span class="font-bold text-slate-400 text-sm">#3</span>
+                        <span class="font-semibold text-sm">Priya (Grade 2)</span>
+                    </div>
+                    <span class="text-xs font-bold text-gold">115 Stars</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: GAME CELEBRATION REWARD MODAL -->
+    <div id="celebration-modal" class="fixed inset-0 z-50 bg-indigo-950/80 backdrop-blur-lg hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-md w-full p-8 rounded-3xl text-center space-y-6 border border-gold/40 glow-gold">
+            <div class="w-20 h-20 rounded-full bg-gold/20 text-gold text-4xl flex items-center justify-center mx-auto border-2 border-gold">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="space-y-2">
+                <h2 class="font-display text-3xl font-extrabold text-white">Outstanding Job!</h2>
+                <p class="text-sm text-slate-300">You completed the learning activity!</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
+                <div>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-bold">Stars Earned</p>
+                    <p id="celebration-stars" class="text-2xl font-display font-extrabold text-gold">+15</p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-bold">XP Gained</p>
+                    <p id="celebration-xp" class="text-2xl font-display font-extrabold text-coral">+150 XP</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="closeModal('celebration-modal'); navigateTo('game-hub');" class="flex-1 py-3.5 rounded-2xl bg-white/10 text-white font-bold text-sm">
+                    Game Hub
+                </button>
+                <button onclick="closeModal('celebration-modal'); restartCurrentGame();" class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-coral to-gold font-bold text-sm text-indigo-950 shadow-lg">
+                    Play Again
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: GLOBAL WORKSHEET SELECTOR MODAL -->
+    <div id="global-worksheet-selector-modal" class="fixed inset-0 z-50 bg-indigo-950/85 backdrop-blur-lg hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-lg w-full p-6 md:p-8 rounded-3xl space-y-6 border border-white/20 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-mint/20 text-mint flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-print"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-xl text-white">Paper Worksheet Generator</h3>
+                        <p class="text-xs text-slate-300">Select Grade & Content for Printable Paper</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('global-worksheet-selector-modal')" class="p-2 rounded-xl bg-white/10 text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-200 mb-1">Select Grade Level:</label>
+                    <select id="ws-sel-grade" onchange="updateWorksheetSubjectDropdown()" class="w-full px-4 py-3 rounded-xl bg-indigo-900 border border-white/20 text-white font-semibold focus:outline-none">
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-200 mb-1">Select Subject or Full Exam:</label>
+                    <select id="ws-sel-subject" onchange="updateWorksheetChapterDropdown()" class="w-full px-4 py-3 rounded-xl bg-indigo-900 border border-white/20 text-white font-semibold focus:outline-none">
+                    </select>
+                </div>
+
+                <div id="ws-chapter-select-group">
+                    <label class="block font-bold text-slate-200 mb-1">Select Specific Chapter:</label>
+                    <select id="ws-sel-chapter" class="w-full px-4 py-3 rounded-xl bg-indigo-900 border border-white/20 text-white font-semibold focus:outline-none">
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-2">
+                <button onclick="closeModal('global-worksheet-selector-modal')" class="px-5 py-2.5 rounded-xl bg-white/10 text-slate-200 text-xs font-semibold">Cancel</button>
+                <button onclick="generateCustomWorksheetFromSelector()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-coral to-gold font-bold text-xs text-indigo-950 flex items-center space-x-2">
+                    <i class="fa-solid fa-file-circle-check"></i>
+                    <span>Generate Paper Sheet</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: PRINTABLE WORKSHEET PREVIEW & PRINT MODAL -->
+    <div id="worksheet-generator-modal" class="fixed inset-0 z-50 bg-indigo-950/85 backdrop-blur-lg hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-3xl w-full p-6 md:p-8 rounded-3xl space-y-6 border border-white/20 max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between no-print">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-coral/20 text-coral flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-print"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-xl text-white">Worksheet Preview</h3>
+                        <p class="text-xs text-slate-300">Ready for instant printing or PDF download</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('worksheet-generator-modal')" class="p-2 rounded-xl bg-white/10 text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- PRINTABLE SHEET PAPER CONTAINER -->
+            <div id="printable-worksheet" class="bg-white text-slate-900 p-6 md:p-8 rounded-2xl space-y-6 border border-slate-300 shadow-xl">
+                <!-- Header -->
+                <div class="border-b-2 border-slate-900 pb-4 space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h1 class="text-2xl font-bold font-display uppercase tracking-wide text-slate-900" id="ws-title">Chapter Worksheet</h1>
+                            <p class="text-xs font-semibold text-slate-600" id="ws-subtitle">Grade & Subject Placeholder</p>
+                        </div>
+                        <div class="text-right text-[11px] font-semibold text-slate-700 space-y-1">
+                            <p>School Name: _____________________</p>
+                            <p>Student Name: ____________________</p>
+                            <p>Roll No: _________ Date: __________</p>
+                            <p>Total Marks: <span id="ws-total-marks">10</span> | Score: _____</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-100 p-2.5 rounded-lg border border-slate-300 text-[11px] text-slate-700 italic">
+                        <strong>Instructions for Students:</strong> Read each question carefully and write down your answer in the space provided or circle the correct multiple-choice option.
+                    </div>
+                </div>
+
+                <!-- Questions List -->
+                <div id="ws-questions-container" class="space-y-4 text-xs font-medium"></div>
+
+                <!-- Teacher Answer Key -->
+                <div id="ws-answer-key-container" class="border-t-2 border-dashed border-slate-400 pt-4 mt-8">
+                    <h3 class="font-bold text-xs uppercase text-slate-800 tracking-wider mb-2">🔑 Teacher / Parent Answer Key (Detachable)</h3>
+                    <div id="ws-answer-key-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px] font-semibold text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-2 no-print">
+                <button onclick="closeModal('worksheet-generator-modal')" class="px-5 py-2.5 rounded-xl bg-white/10 text-slate-200 text-xs font-semibold">Close Preview</button>
+                <button onclick="downloadWorksheetHTML()" class="px-5 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold flex items-center space-x-2">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Download File</span>
+                </button>
+                <button onclick="window.print()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-coral to-gold font-bold text-xs text-indigo-950 flex items-center space-x-2 shadow-lg">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Print Paper Sheet</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-auto border-t border-white/10 bg-indigo-950/60 py-6 px-4 lg:px-8 text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+            <div>
+                <p class="font-bold text-slate-200">Gamified Learning for Rural Education</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Design Thinking & Innovation and Entrepreneurship (DTIE)</p>
+            </div>
+            
+            <div class="space-y-1">
+                <p class="text-[11px]"><strong class="text-slate-300">Team Members:</strong> B. Sreemayi | Ch Jaya Haasika | P. V. Srisukta Hiranmayi | Ch. Akshitha Satwika</p>
+                <p class="text-[11px]"><strong class="text-slate-300">Project Supervisor:</strong> Dr. G. Sudhakar (Assoc. Professor, Dept. of CSE)</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /* ==========================================================================
+           1. MULTI-CHAPTER CURRICULUM DATASET (Nursery to Class 6)
+           ========================================================================== */
+        const CURRICULUM_DATA = {
+            "nursery": {
+                name: "Nursery",
+                category: "preprimary",
+                subjects: [
+                    {
+                        id: "eng_nursery",
+                        name: "English Foundations",
+                        icon: "fa-font",
+                        color: "coral",
+                        chapters: [
+                            {
+                                id: "phonics_abc",
+                                title: "Ch 1: Alphabet Sound Magic",
+                                items: [
+                                    { q: "What letter starts the word 'Apple'?", options: ["A", "B", "C", "D"], answer: "A", hint: "First letter of alphabet!", icon: "🍎" },
+                                    { q: "Which sound does a 'Cat' start with?", options: ["A", "B", "C", "P"], answer: "C", hint: "C is for Cat!", icon: "🐱" },
+                                    { q: "What letter comes right after A?", options: ["C", "B", "Z", "D"], answer: "B", hint: "B is for Ball!", icon: "⚽" },
+                                    { q: "Find the letter for 'Dog'.", options: ["D", "E", "F", "G"], answer: "D", hint: "D for Dog!", icon: "🐶" },
+                                    { q: "What letter is 'Elephant'?", options: ["A", "E", "I", "O"], answer: "E", hint: "E for Elephant!", icon: "🐘" },
+                                    { q: "Which letter is for 'Fish'?", options: ["F", "H", "M", "S"], answer: "F", hint: "F swims in water!", icon: "🐟" },
+                                    { q: "What sound starts 'Sun'?", options: ["S", "T", "U", "V"], answer: "S", hint: "S for Sun!", icon: "☀️" },
+                                    { q: "Which letter is for 'Ball'?", options: ["A", "B", "K", "L"], answer: "B", hint: "B bounces!", icon: "⚽" },
+                                    { q: "Find the letter 'M' for Monkey.", options: ["M", "N", "O", "P"], answer: "M", hint: "M loves bananas!", icon: "🐒" },
+                                    { q: "Which letter looks like a full circle?", options: ["O", "C", "L", "T"], answer: "O", hint: "Round O!", icon: "⭕" }
+                                ]
+                            },
+                            {
+                                id: "rhymes_words",
+                                title: "Ch 2: Nursery Rhymes & Words",
+                                items: [
+                                    { q: "Complete: Twinkle Twinkle Little ____", options: ["Star", "Moon", "Sun", "Cloud"], answer: "Star", hint: "Shines in night sky!", icon: "⭐" },
+                                    { q: "Baa Baa Black Sheep have you any ____?", options: ["Wool", "Milk", "Toys", "Food"], answer: "Wool", hint: "Warm sheep hair!", icon: "🐑" },
+                                    { q: "Humpty Dumpty sat on a ____", options: ["Wall", "Chair", "Tree", "Box"], answer: "Wall", hint: "High wall!", icon: "🧱" },
+                                    { q: "Jack and Jill went up the ____", options: ["Hill", "Road", "River", "Roof"], answer: "Hill", hint: "To fetch water!", icon: "⛰️" },
+                                    { q: "Johny Johny Yes ____?", options: ["Papa", "Mama", "Teacher", "Friend"], answer: "Papa", hint: "Eating sugar?", icon: "👦" },
+                                    { q: "The Wheels on the Bus go round and ____", options: ["Round", "Up", "Down", "Fast"], answer: "Round", hint: "Circular motion!", icon: "🚌" },
+                                    { q: "Incy Wincy Spider climbed up the water ____", options: ["Spout", "Pipe", "Tree", "Wall"], answer: "Spout", hint: "Rain washed him out!", icon: "🕷️" },
+                                    { q: "Mary had a little ____", options: ["Lamb", "Cow", "Dog", "Cat"], answer: "Lamb", hint: "Fleece white as snow!", icon: "🐑" },
+                                    { q: "Old MacDonald had a ____", options: ["Farm", "Shop", "House", "Park"], answer: "Farm", hint: "E-I-E-I-O!", icon: "🚜" },
+                                    { q: "Row row row your ____", options: ["Boat", "Car", "Bike", "Plane"], answer: "Boat", hint: "Gently down the stream!", icon: "🚣" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: "math_nursery",
+                        name: "Basic Math",
+                        icon: "fa-shapes",
+                        color: "gold",
+                        chapters: [
+                            {
+                                id: "numbers_1_5",
+                                title: "Ch 1: Fun with Numbers 1 to 5",
+                                items: [
+                                    { q: "How many suns are in the sky?", options: ["1", "2", "3", "5"], answer: "1", hint: "Only one sun!", icon: "☀️" },
+                                    { q: "Count the eyes on your face!", options: ["1", "2", "4", "5"], answer: "2", hint: "Left and right eye!", icon: "👀" },
+                                    { q: "How many wheels on a tricycle?", options: ["2", "3", "4", "1"], answer: "3", hint: "Tri means three!", icon: "🚲" },
+                                    { q: "Count legs on a chair: 🪑", options: ["2", "3", "4", "5"], answer: "4", hint: "Four legs!", icon: "🪑" },
+                                    { q: "How many fingers on one hand?", options: ["3", "4", "5", "6"], answer: "5", hint: "High five!", icon: "🖐️" },
+                                    { q: "Which number comes after 1?", options: ["2", "3", "4", "0"], answer: "2", hint: "1, 2...", icon: "🔢" },
+                                    { q: "Which shape is round like a ball?", options: ["Circle", "Square", "Triangle", "Star"], answer: "Circle", hint: "No corners!", icon: "⚪" },
+                                    { q: "Count these stars: ⭐⭐", options: ["1", "2", "3", "4"], answer: "2", hint: "One, Two!", icon: "⭐" },
+                                    { q: "Which number comes before 5?", options: ["2", "3", "4", "1"], answer: "4", hint: "3, 4, 5!", icon: "4️⃣" },
+                                    { q: "How many ears do you have?", options: ["1", "2", "3", "4"], answer: "2", hint: "Two ears!", icon: "👂" }
+                                ]
+                            },
+                            {
+                                id: "shapes_colors_nur",
+                                title: "Ch 2: Basic Shapes & Sizes",
+                                items: [
+                                    { q: "Which shape looks like a pizza wheel?", options: ["Circle", "Square", "Box", "Line"], answer: "Circle", hint: "Round shape!", icon: "🍕" },
+                                    { q: "Which animal is BIG?", options: ["Elephant", "Ant", "Fly", "Bee"], answer: "Elephant", hint: "Huge trunk animal!", icon: "🐘" },
+                                    { q: "Which item is SMALL?", options: ["Ant", "Bus", "House", "Tree"], answer: "Ant", hint: "Tiny insect!", icon: "🐜" },
+                                    { q: "What shape is a book cover?", options: ["Rectangle", "Circle", "Oval", "Dot"], answer: "Rectangle", hint: "Long sides!", icon: "📖" },
+                                    { q: "Count these dots: ●●●", options: ["3", "2", "4", "1"], answer: "3", hint: "One, two, three!", icon: "⚫" },
+                                    { q: "Which line is longer?", options: ["Long Ribbon", "Short Stick", "Dot", "Point"], answer: "Long Ribbon", hint: "Stretches far!", icon: "🎗️" },
+                                    { q: "Count these apples: 🍎🍎🍎🍎", options: ["4", "3", "5", "2"], answer: "4", hint: "Four apples!", icon: "🍎" },
+                                    { q: "Which container holds MORE water?", options: ["Bucket", "Spoon", "Cup", "Cap"], answer: "Bucket", hint: "Large bucket!", icon: "🪣" },
+                                    { q: "What shape has 4 equal sides?", options: ["Square", "Circle", "Triangle", "Line"], answer: "Square", hint: "Equal sides box!", icon: "⬛" },
+                                    { q: "Count zero items means how many?", options: ["0 / Nothing", "1", "5", "10"], answer: "0 / Nothing", hint: "Zero means empty!", icon: "0️⃣" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "lkg": {
+                name: "LKG",
+                category: "preprimary",
+                subjects: [
+                    {
+                        id: "env_lkg",
+                        name: "Environmental Awareness",
+                        icon: "fa-tree",
+                        color: "mint",
+                        chapters: [
+                            {
+                                id: "nature_animals",
+                                title: "Ch 1: Animals & Nature Colors",
+                                items: [
+                                    { q: "What color is ripe banana?", options: ["Yellow", "Red", "Blue", "Black"], answer: "Yellow", hint: "Yellow fruit!", icon: "🍌" },
+                                    { q: "Which animal says 'Moo'?", options: ["Cow", "Dog", "Cat", "Duck"], answer: "Cow", hint: "Gives milk!", icon: "🐄" },
+                                    { q: "What color is fresh grass?", options: ["Green", "Pink", "Purple", "White"], answer: "Green", hint: "Grass color!", icon: "🌿" },
+                                    { q: "Which bird swims in pond?", options: ["Duck", "Crow", "Eagle", "Parrot"], answer: "Duck", hint: "Quack Quack!", icon: "🦆" },
+                                    { q: "What color is clear sky?", options: ["Blue", "Yellow", "Red", "Green"], answer: "Blue", hint: "Sky color!", icon: "☁️" },
+                                    { q: "Which animal loves carrots?", options: ["Rabbit", "Lion", "Bear", "Fish"], answer: "Rabbit", hint: "Long ears!", icon: "🐇" },
+                                    { q: "What color is an apple?", options: ["Red", "Blue", "Black", "Yellow"], answer: "Red", hint: "Juicy red!", icon: "🍎" },
+                                    { q: "Where do fish live?", options: ["Water", "Tree", "Sky", "Cave"], answer: "Water", hint: "They swim!", icon: "🐠" },
+                                    { q: "Which fruit is orange?", options: ["Orange", "Grape", "Melon", "Plum"], answer: "Orange", hint: "Orange color!", icon: "🍊" },
+                                    { q: "King of the Jungle?", options: ["Lion", "Mouse", "Rabbit", "Ant"], answer: "Lion", hint: "Loud roar!", icon: "🦁" }
+                                ]
+                            },
+                            {
+                                id: "seasons_weather",
+                                title: "Ch 2: Weather & Surroundings",
+                                items: [
+                                    { q: "What do we wear on a rainy day?", options: ["Raincoat", "Sweater", "Swimsuit", "Cap"], answer: "Raincoat", hint: "Keeps us dry!", icon: "🌧️" },
+                                    { q: "What shines brightly in day time?", options: ["Sun", "Moon", "Stars", "Lantern"], answer: "Sun", hint: "Gives warmth!", icon: "☀️" },
+                                    { q: "What appears in sky at night?", options: ["Moon & Stars", "Sun", "Rainbow", "Clouds only"], answer: "Moon & Stars", hint: "Night sky!", icon: "🌙" },
+                                    { q: "What do we drink when thirsty?", options: ["Water", "Oil", "Paint", "Ink"], answer: "Water", hint: "Fresh water!", icon: "💧" },
+                                    { q: "Colorful arc in sky after rain?", options: ["Rainbow", "Kite", "Plane", "Bird"], answer: "Rainbow", hint: "7 colors!", icon: "🌈" },
+                                    { q: "We wear warm woolen clothes in...", options: ["Winter", "Summer", "Rainy", "Spring"], answer: "Winter", hint: "Cold season!", icon: "❄️" },
+                                    { q: "Which animal has a trunk?", options: ["Elephant", "Tiger", "Fox", "Deer"], answer: "Elephant", hint: "Long trunk!", icon: "🐘" },
+                                    { q: "What plant gives us shadow & shade?", options: ["Big Tree", "Grass", "Rose Bush", "Moss"], answer: "Big Tree", hint: "Tall shade!", icon: "🌳" },
+                                    { q: "Which bird can talk like humans?", options: ["Parrot", "Owl", "Penguin", "Hen"], answer: "Parrot", hint: "Green parrot!", icon: "🦜" },
+                                    { q: "What blooms in plants?", options: ["Flowers", "Stones", "Paper", "Glass"], answer: "Flowers", hint: "Smells sweet!", icon: "🌸" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "ukg": {
+                name: "UKG",
+                category: "preprimary",
+                subjects: [
+                    {
+                        id: "creativity_ukg",
+                        name: "Drawing & Creativity",
+                        icon: "fa-palette",
+                        color: "coral",
+                        chapters: [
+                            {
+                                id: "shapes_craft",
+                                title: "Ch 1: Patterns & World Shapes",
+                                items: [
+                                    { q: "Which shape has 3 corners?", options: ["Triangle", "Circle", "Square", "Oval"], answer: "Triangle", hint: "Tri = 3!", icon: "🔺" },
+                                    { q: "A square has how many equal sides?", options: ["4", "3", "2", "5"], answer: "4", hint: "4 sides!", icon: "⬛" },
+                                    { q: "Red + Yellow color makes?", options: ["Orange", "Green", "Purple", "Black"], answer: "Orange", hint: "Sunset color!", icon: "🎨" },
+                                    { q: "Which shape looks like an egg?", options: ["Oval", "Square", "Triangle", "Cube"], answer: "Oval", hint: "Stretched circle!", icon: "🥚" },
+                                    { q: "What shape is a pizza slice?", options: ["Triangle", "Circle", "Star", "Square"], answer: "Triangle", hint: "3 corner slice!", icon: "🍕" },
+                                    { q: "What tool is used to color?", options: ["Crayon", "Spoon", "Key", "Comb"], answer: "Crayon", hint: "Color stick!", icon: "🖍️" },
+                                    { q: "What shape shines in night sky?", options: ["Star", "Rectangle", "Square", "Triangle"], answer: "Star", hint: "Twinkle star!", icon: "⭐" },
+                                    { q: "Which color is a leaf?", options: ["Green", "Blue", "Pink", "Red"], answer: "Green", hint: "Nature color!", icon: "🍃" },
+                                    { q: "Which line goes straight up and down?", options: ["Vertical", "Horizontal", "Curved", "Circle"], answer: "Vertical", hint: "Up and down!", icon: "⬆" },
+                                    { q: "What shape is a wheel?", options: ["Circle", "Square", "Diamond", "Triangle"], answer: "Circle", hint: "Rolls smoothly!", icon: "🛞" }
+                                ]
+                            },
+                            {
+                                id: "craft_patterns",
+                                title: "Ch 2: Craft & Object Building",
+                                items: [
+                                    { q: "Blue + Yellow color makes?", options: ["Green", "Red", "Orange", "Black"], answer: "Green", hint: "Plant color!", icon: "🎨" },
+                                    { q: "Which material is used to stick paper?", options: ["Glue / Paste", "Water", "Sand", "Oil"], answer: "Glue / Paste", hint: "Sticks papers!", icon: "🧴" },
+                                    { q: "What shape is a birthday cap?", options: ["Cone", "Cube", "Sphere", "Flat"], answer: "Cone", hint: "Pointed top!", icon: "🥳" },
+                                    { q: "What shape is a football?", options: ["Sphere / Ball", "Square", "Cube", "Triangle"], answer: "Sphere / Ball", hint: "3D round!", icon: "⚽" },
+                                    { q: "Which tool cuts paper safely?", options: ["Child Scissors", "Pencil", "Ruler", "Eraser"], answer: "Child Scissors", hint: "Paper cutter!", icon: "✂️" },
+                                    { q: "What do you use to clean pencil marks?", options: ["Eraser", "Brush", "Chalk", "Paper"], answer: "Eraser", hint: "Rub out marks!", icon: "🧹" },
+                                    { q: "Red + Blue color makes?", options: ["Purple", "Yellow", "Green", "White"], answer: "Purple", hint: "Royal color!", icon: "🟣" },
+                                    { q: "What shape is a dice?", options: ["Cube", "Circle", "Cone", "Cylinder"], answer: "Cube", hint: "Box shape!", icon: "🎲" },
+                                    { q: "What pattern comes next: 🔴🟡🔴🟡____", options: ["🔴", "🟢", "🔵", "⚫"], answer: "🔴", hint: "Red follows yellow!", icon: "🔴" },
+                                    { q: "What pattern comes next: ⭐🌙⭐🌙____", options: ["⭐", "☀️", "☁️", "⚡"], answer: "⭐", hint: "Star follows moon!", icon: "⭐" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "class1": {
+                name: "Class 1",
+                category: "lowerprimary",
+                subjects: [
+                    {
+                        id: "math_c1",
+                        name: "Mathematics",
+                        icon: "fa-calculator",
+                        color: "gold",
+                        chapters: [
+                            {
+                                id: "add_sub_1",
+                                title: "Ch 1: Addition & Subtraction",
+                                items: [
+                                    { q: "What is 2 + 3?", options: ["5", "4", "6", "3"], answer: "5", hint: "2 + 3 fingers!", icon: "➕" },
+                                    { q: "What is 5 - 2?", options: ["3", "2", "4", "1"], answer: "3", hint: "Take away 2!", icon: "➖" },
+                                    { q: "What is 4 + 4?", options: ["8", "7", "9", "6"], answer: "8", hint: "Double 4!", icon: "🔢" },
+                                    { q: "What is 10 - 5?", options: ["5", "4", "6", "2"], answer: "5", hint: "Half of 10!", icon: "🖐️" },
+                                    { q: "What is 6 + 1?", options: ["7", "6", "8", "5"], answer: "7", hint: "Next number!", icon: "➕" },
+                                    { q: "What is 3 + 0?", options: ["3", "0", "4", "1"], answer: "3", hint: "Adding zero changes nothing!", icon: "⭕" },
+                                    { q: "3 apples + 2 apples = ?", options: ["5", "6", "4", "3"], answer: "5", hint: "3 + 2 = 5", icon: "🍎" },
+                                    { q: "What is 7 - 1?", options: ["6", "5", "8", "4"], answer: "6", hint: "Number before 7!", icon: "➖" },
+                                    { q: "What is 1 + 9?", options: ["10", "9", "8", "11"], answer: "10", hint: "Full 10!", icon: "🔟" },
+                                    { q: "What is 8 - 4?", options: ["4", "3", "5", "2"], answer: "4", hint: "Half of 8!", icon: "🔢" }
+                                ]
+                            },
+                            {
+                                id: "money_time_c1",
+                                title: "Ch 2: Coins, Money & Time",
+                                items: [
+                                    { q: "How many 1-rupee coins make 5 rupees?", options: ["5", "2", "10", "1"], answer: "5", hint: "Five 1-rupee coins!", icon: "🪙" },
+                                    { q: "Which clock hand shows hours?", options: ["Short Hand", "Long Hand", "Thin Hand", "Bell"], answer: "Short Hand", hint: "Short hand = hours!", icon: "⏰" },
+                                    { q: "How many hours in a full day?", options: ["24", "12", "7", "30"], answer: "24", hint: "24 hours!", icon: "⌛" },
+                                    { q: "How many days in 1 week?", options: ["7", "5", "10", "30"], answer: "7", hint: "Monday to Sunday!", icon: "📅" },
+                                    { q: "Which coin is bigger: ₹1 or ₹5?", options: ["₹5", "₹1", "Both same", "None"], answer: "₹5", hint: "₹5 coin!", icon: "💰" },
+                                    { q: "Sun rises in the...", options: ["Morning", "Night", "Evening", "Midnight"], answer: "Morning", hint: "Start of day!", icon: "🌅" },
+                                    { q: "Which day comes after Monday?", options: ["Tuesday", "Sunday", "Friday", "Wednesday"], answer: "Tuesday", hint: "Second day!", icon: "📆" },
+                                    { q: "What is 5 rupees + 5 rupees?", options: ["₹10", "₹15", "₹8", "₹20"], answer: "₹10", hint: "5 + 5 = 10", icon: "💵" },
+                                    { q: "Clock short hand at 3, long hand at 12. Time?", options: ["3 o'clock", "12 o'clock", "6 o'clock", "1 o'clock"], answer: "3 o'clock", hint: "3:00!", icon: "🕒" },
+                                    { q: "Which meal do we eat in morning?", options: ["Breakfast", "Dinner", "Lunch", "Supper"], answer: "Breakfast", hint: "Morning food!", icon: "🍳" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: "evs_c1",
+                        name: "Environmental Studies",
+                        icon: "fa-leaf",
+                        color: "mint",
+                        chapters: [
+                            {
+                                id: "my_body_family",
+                                title: "Ch 1: My Body & Family",
+                                items: [
+                                    { q: "Which body part helps us see?", options: ["Eyes", "Ears", "Nose", "Nails"], answer: "Eyes", hint: "Look around!", icon: "👁️" },
+                                    { q: "Which body part helps us hear music?", options: ["Ears", "Hands", "Eyes", "Teeth"], answer: "Ears", hint: "Listen carefully!", icon: "👂" },
+                                    { q: "How many legs does a human have?", options: ["2", "4", "6", "8"], answer: "2", hint: "Two legs!", icon: "🦵" },
+                                    { q: "Who is your mother's mother?", options: ["Grandmother", "Aunt", "Sister", "Cousin"], answer: "Grandmother", hint: "Grandma!", icon: "👵" },
+                                    { q: "We smell things with our...", options: ["Nose", "Chin", "Elbow", "Hair"], answer: "Nose", hint: "Sniff sniff!", icon: "👃" },
+                                    { q: "We chew food using our...", options: ["Teeth", "Tongue", "Lips", "Cheeks"], answer: "Teeth", hint: "White teeth!", icon: "🦷" },
+                                    { q: "Father's brother is your...", options: ["Uncle", "Grandpa", "Brother", "Nephew"], answer: "Uncle", hint: "Uncle!", icon: "👨" },
+                                    { q: "Total fingers on both hands?", options: ["10", "8", "5", "12"], answer: "10", hint: "5 + 5 = 10", icon: "👐" },
+                                    { q: "Which organ tastes ice cream?", options: ["Tongue", "Ear", "Nose", "Hand"], answer: "Tongue", hint: "Tasting organ!", icon: "👅" },
+                                    { q: "We walk and run using...", options: ["Legs", "Arms", "Head", "Shoulders"], answer: "Legs", hint: "Run fast!", icon: "🏃" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        const sampleClasses = ["class2", "class3", "class4", "class5", "class6"];
+        sampleClasses.forEach((clsKey, index) => {
+            const classNum = index + 2;
+            CURRICULUM_DATA[clsKey] = {
+                name: `Class ${classNum}`,
+                category: classNum <= 3 ? "lowerprimary" : "upperprimary",
+                subjects: [
+                    {
+                        id: `math_c${classNum}`,
+                        name: "Mathematics",
+                        icon: "fa-calculator",
+                        color: "gold",
+                        chapters: [
+                            {
+                                id: `c${classNum}_m_ch1`,
+                                title: `Ch 1: Grade ${classNum} Math Operations`,
+                                items: CURRICULUM_DATA.class1.subjects[0].chapters[0].items
+                            },
+                            {
+                                id: `c${classNum}_m_ch2`,
+                                title: `Ch 2: Geometry & Fractions`,
+                                items: CURRICULUM_DATA.class1.subjects[0].chapters[1].items
+                            }
+                        ]
+                    },
+                    {
+                        id: `sci_c${classNum}`,
+                        name: classNum <= 3 ? "EVS & Nature" : "General Science",
+                        icon: "fa-flask",
+                        color: "mint",
+                        chapters: [
+                            {
+                                id: `c${classNum}_s_ch1`,
+                                title: `Ch 1: Plants & Food Life`,
+                                items: CURRICULUM_DATA.class1.subjects[1].chapters[0].items
+                            },
+                            {
+                                id: `c${classNum}_s_ch2`,
+                                title: `Ch 2: Earth & Natural Resources`,
+                                items: CURRICULUM_DATA.lkg.subjects[0].chapters[1].items
+                            }
+                        ]
+                    }
+                ]
+            };
+        });
+
+        /* ==========================================================================
+           2. GLOBAL STATE & NAVIGATION MANAGER
+           ========================================================================== */
+        let state = {
+            currentGradeKey: 'nursery',
+            currentSubjectId: null,
+            currentChapterId: null,
+            activeGameMode: 1,
+            score: 0,
+            streak: 0,
+            globalStars: parseInt(localStorage.getItem('rural_stars') || '35'),
+            globalXP: parseInt(localStorage.getItem('rural_xp') || '180'),
+            audioEnabled: true,
+            activeQuestionIndex: 0,
+
+            // Final Exam State
+            examQuestions: [],
+            examCurrentIndex: 0,
+            examAnswers: {},
+            examMarked: {},
+            examTimer: 12 * 60,
+            examInterval: null,
+            examPaused: false,
+
+            // Active Printed Worksheet Data
+            activeWorksheetData: null
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateGlobalHUD();
+            renderGradesList();
+            initWebAudio();
+        });
+
+        function updateGlobalHUD() {
+            document.getElementById('global-stars').innerText = state.globalStars;
+            document.getElementById('global-xp').innerText = state.globalXP;
+            document.getElementById('leaderboard-my-stars').innerText = state.globalStars + " Stars";
+            localStorage.setItem('rural_stars', state.globalStars);
+            localStorage.setItem('rural_xp', state.globalXP);
+        }
+
+        function navigateTo(viewId) {
+            const views = ['landing', 'grades', 'subjects', 'game-hub', 'game-player', 'final-exam'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
+            });
+
+            const targetView = document.getElementById(`view-${viewId}`);
+            if (targetView) targetView.classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* ==========================================================================
+           3. GRADE & SUBJECT DASHBOARD RENDERERS
+           ========================================================================== */
+        function renderGradesList() {
+            const preContainer = document.getElementById('grade-list-preprimary');
+            const lowerContainer = document.getElementById('grade-list-lowerprimary');
+            const upperContainer = document.getElementById('grade-list-upperprimary');
+
+            preContainer.innerHTML = '';
+            lowerContainer.innerHTML = '';
+            upperContainer.innerHTML = '';
+
+            Object.keys(CURRICULUM_DATA).forEach(key => {
+                const grade = CURRICULUM_DATA[key];
+                const cardHtml = `
+                    <div onclick="selectGrade('${key}')" class="glass-card glass-card-hover p-4 rounded-2xl cursor-pointer flex items-center justify-between border-l-4 border-l-coral">
+                        <div>
+                            <h4 class="font-display font-bold text-white text-base">${grade.name}</h4>
+                            <p class="text-[11px] text-slate-300">${grade.subjects.length} Subjects • Multi-Chapters</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-xl bg-white/10 text-white flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </div>
+                    </div>
+                `;
+
+                if (grade.category === 'preprimary') preContainer.innerHTML += cardHtml;
+                else if (grade.category === 'lowerprimary') lowerContainer.innerHTML += cardHtml;
+                else if (grade.category === 'upperprimary') upperContainer.innerHTML += cardHtml;
+            });
+        }
+
+        function selectGrade(gradeKey) {
+            state.currentGradeKey = gradeKey;
+            const grade = CURRICULUM_DATA[gradeKey];
+            document.getElementById('current-grade-badge').innerText = grade.name;
+
+            const pillsContainer = document.getElementById('subject-pills-container');
+            pillsContainer.innerHTML = '';
+
+            if (grade.subjects.length === 0) {
+                pillsContainer.innerHTML = `<p class="text-xs text-slate-400">No subjects available.</p>`;
+            } else {
+                grade.subjects.forEach((sub, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = `px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+                        idx === 0 ? 'bg-coral text-indigo-950 shadow-md' : 'bg-white/10 text-slate-200 hover:bg-white/20'
+                    }`;
+                    btn.innerHTML = `<i class="fa-solid ${sub.icon}"></i><span>${sub.name}</span>`;
+                    btn.onclick = () => {
+                        Array.from(pillsContainer.children).forEach(c => {
+                            c.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 bg-white/10 text-slate-200 hover:bg-white/20';
+                        });
+                        btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 bg-coral text-indigo-950 shadow-md';
+                        renderChaptersForSubject(sub);
+                    };
+                    pillsContainer.appendChild(btn);
+                });
+
+                state.currentSubjectId = grade.subjects[0].id;
+                renderChaptersForSubject(grade.subjects[0]);
+            }
+
+            navigateTo('subjects');
+        }
+
+        function renderChaptersForSubject(subject) {
+            state.currentSubjectId = subject.id;
+            const grid = document.getElementById('chapters-grid');
+            grid.innerHTML = '';
+
+            subject.chapters.forEach(ch => {
+                const card = `
+                    <div class="glass-card glass-card-hover p-6 rounded-3xl space-y-4 border-t-4 border-t-${subject.color || 'coral'}">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] uppercase font-bold px-2.5 py-1 rounded-full bg-white/10 text-slate-300">
+                                ${ch.items.length} Interactive Questions
+                            </span>
+                            <span class="text-gold text-xs font-bold"><i class="fa-solid fa-star"></i> 10 Stars</span>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white">${ch.title}</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">Converts into 6 playable mini-games (Quests, Match-3, Memory, Quiz, Drag-Drop, Creative Canvas).</p>
+                        
+                        <div class="pt-2 flex items-center gap-2">
+                            <button onclick="launchChapterGameHub('${ch.id}')" class="flex-1 py-3 rounded-2xl bg-gradient-to-r from-coral to-gold font-bold text-xs text-indigo-950 shadow-md hover:brightness-110 transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-gamepad"></i>
+                                <span>Play Mini-Games</span>
+                            </button>
+                            <button onclick="state.currentChapterId='${ch.id}'; openCurrentChapterWorksheet();" class="p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-mint text-sm" title="Print Chapter Paper Sheet">
+                                <i class="fa-solid fa-print"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        function launchChapterGameHub(chapterId) {
+            state.currentChapterId = chapterId;
+            const grade = CURRICULUM_DATA[state.currentGradeKey];
+            const subject = grade.subjects.find(s => s.id === state.currentSubjectId);
+            const chapter = subject.chapters.find(c => c.id === chapterId);
+
+            document.getElementById('game-hub-subject-badge').innerText = subject.name;
+            document.getElementById('game-hub-chapter-badge').innerText = chapter.title;
+            document.getElementById('game-hub-title').innerText = `${chapter.title} - Game Modes`;
+
+            navigateTo('game-hub');
+        }
+
+        /* ==========================================================================
+           4. AUDIO SYNTHESIS & WEB AUDIO
+           ========================================================================== */
+        function toggleAudioGuide() {
+            state.audioEnabled = !state.audioEnabled;
+            const icon = document.getElementById('speech-icon');
+            if (state.audioEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                speakText("Audio voice assistant enabled.");
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+                if (window.speechSynthesis) window.speechSynthesis.cancel();
+            }
+        }
+
+        function speakText(text) {
+            if (!state.audioEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        let audioCtx = null;
+        function initWebAudio() {
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+        }
+
+        function playSoundEffect(type) {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(164.81, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'fanfare') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        /* ==========================================================================
+           5. GAME ENGINES DISPATCHER
+           ========================================================================== */
+        function launchGameMode(modeNumber) {
+            state.activeGameMode = modeNumber;
+            state.score = 0;
+            state.streak = 0;
+            state.activeQuestionIndex = 0;
+
+            const grade = CURRICULUM_DATA[state.currentGradeKey];
+            const subject = grade.subjects.find(s => s.id === state.currentSubjectId);
+            const chapter = subject.chapters.find(c => c.id === state.currentChapterId);
+
+            document.getElementById('game-score').innerText = state.score;
+            document.getElementById('game-streak').innerText = state.streak;
+            document.getElementById('active-game-chapter').innerText = `${subject.name} - ${chapter.title}`;
+
+            const gameTitles = {
+                1: "The Explorer's Quest",
+                2: "Village Carnival Match",
+                3: "Memory Treasure Hunt",
+                4: "Master Quiz Battle",
+                5: "Fill-the-Puzzle Builder",
+                6: "Creative Canvas & Builder"
+            };
+            document.getElementById('active-game-title').innerText = gameTitles[modeNumber];
+
+            navigateTo('game-player');
+            renderEngineMode(modeNumber, chapter.items);
+        }
+
+        function renderEngineMode(mode, items) {
+            const container = document.getElementById('game-canvas-container');
+            container.innerHTML = '';
+
+            if (mode === 1) renderEngineExplorerQuest(container, items);
+            else if (mode === 2) renderEngineVillageCarnival(container, items);
+            else if (mode === 3) renderEngineMemoryHunt(container, items);
+            else if (mode === 4) renderEngineMasterQuiz(container, items);
+            else if (mode === 5) renderEngineFillPuzzle(container, items);
+            else if (mode === 6) renderEngineCreativeCanvas(container, items);
+        }
+
+        /* Engine 1 */
+        function renderEngineExplorerQuest(container, items) {
+            const currentItem = items[state.activeQuestionIndex];
+            speakText(`Explorer Quest. ${currentItem.q}`);
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-indigo-950/70 p-5 rounded-2xl border border-coral/30 flex items-start space-x-4">
+                        <div class="text-4xl shrink-0">${currentItem.icon || '🏞️'}</div>
+                        <div class="space-y-1">
+                            <span class="text-[10px] uppercase font-bold text-coral">Step ${state.activeQuestionIndex + 1} of ${items.length}</span>
+                            <h4 class="font-display font-bold text-white text-lg">Help Farmer Raju cross the village river!</h4>
+                            <p class="text-xs text-slate-300">Answer the puzzle below to lay down a wooden bridge plank.</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center py-2 space-y-2">
+                        <p class="font-display font-bold text-xl text-gold">${currentItem.q}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        ${currentItem.options.map(opt => `
+                            <button onclick="handleQuestAnswer('${opt}', '${currentItem.answer}')" class="p-4 rounded-2xl bg-white/10 hover:bg-coral/30 border border-white/15 text-white font-bold text-sm text-left flex items-center justify-between">
+                                <span>${opt}</span>
+                                <i class="fa-solid fa-person-walking-arrow-right text-coral"></i>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleQuestAnswer(selected, correct) {
+            if (selected === correct) {
+                playSoundEffect('correct');
+                state.score += 10;
+                state.streak += 1;
+                speakText("Correct answer!");
+                advanceQuestionOrComplete();
+            } else {
+                playSoundEffect('wrong');
+                state.streak = 0;
+                speakText("Try again!");
+            }
+            updateEngineHUD();
+        }
+
+        /* Engine 2 */
+        function renderEngineVillageCarnival(container, items) {
+            const currentItem = items[state.activeQuestionIndex];
+            speakText(`Carnival Match Target: ${currentItem.q}`);
+
+            container.innerHTML = `
+                <div class="space-y-6 text-center">
+                    <span class="text-xs font-bold text-gold uppercase">Carnival Match Target</span>
+                    <h4 class="font-display font-bold text-2xl text-white">${currentItem.q}</h4>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
+                        ${currentItem.options.map(opt => `
+                            <div onclick="handleCarnivalMatch('${opt}', '${currentItem.answer}')" class="glass-card glass-card-hover p-6 rounded-2xl cursor-pointer border border-gold/30 flex flex-col items-center space-y-2">
+                                <div class="text-3xl">${currentItem.icon || '🎟️'}</div>
+                                <span class="font-bold text-sm text-white">${opt}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleCarnivalMatch(selected, correct) {
+            if (selected === correct) {
+                playSoundEffect('correct');
+                state.score += 10;
+                state.streak += 1;
+                speakText("Tile matched!");
+                advanceQuestionOrComplete();
+            } else {
+                playSoundEffect('wrong');
+                state.streak = 0;
+            }
+            updateEngineHUD();
+        }
+
+        /* Engine 3 */
+        function renderEngineMemoryHunt(container, items) {
+            const sliceItems = items.slice(0, 3);
+            let cards = [];
+            sliceItems.forEach((it, idx) => {
+                cards.push({ id: idx, text: it.q, pairId: idx });
+                cards.push({ id: idx + 10, text: it.answer, pairId: idx });
+            });
+            cards.sort(() => Math.random() - 0.5);
+
+            window.memoryFlipped = [];
+            window.memoryMatchedCount = 0;
+
+            container.innerHTML = `
+                <div class="space-y-4 text-center">
+                    <p class="text-xs font-bold text-mint uppercase">Flip two cards to find twin pairs</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        ${cards.map((c, i) => `
+                            <div id="card-${i}" onclick="flipMemoryCard(${i}, ${c.pairId})" class="h-28 rounded-2xl bg-indigo-950/80 border border-white/20 flex items-center justify-center p-3 cursor-pointer">
+                                <span class="card-back text-3xl text-gold"><i class="fa-solid fa-gem"></i></span>
+                                <span class="card-front hidden text-xs font-bold text-white">${c.text}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function flipMemoryCard(index, pairId) {
+            if (window.memoryFlipped.length >= 2) return;
+            const card = document.getElementById(`card-${index}`);
+            card.querySelector('.card-back').classList.add('hidden');
+            card.querySelector('.card-front').classList.remove('hidden');
+            card.classList.add('border-mint', 'bg-mint/20');
+
+            window.memoryFlipped.push({ index, pairId });
+
+            if (window.memoryFlipped.length === 2) {
+                const [c1, c2] = window.memoryFlipped;
+                if (c1.pairId === c2.pairId && c1.index !== c2.index) {
+                    playSoundEffect('correct');
+                    state.score += 15;
+                    window.memoryMatchedCount++;
+                    window.memoryFlipped = [];
+                    if (window.memoryMatchedCount >= 3) {
+                        setTimeout(() => triggerGameCompletion(), 800);
+                    }
+                } else {
+                    playSoundEffect('wrong');
+                    setTimeout(() => {
+                        [c1.index, c2.index].forEach(idx => {
+                            const el = document.getElementById(`card-${idx}`);
+                            el.querySelector('.card-back').classList.remove('hidden');
+                            el.querySelector('.card-front').classList.add('hidden');
+                            el.classList.remove('border-mint', 'bg-mint/20');
+                        });
+                        window.memoryFlipped = [];
+                    }, 1000);
+                }
+                updateEngineHUD();
+            }
+        }
+
+        /* Engine 4 */
+        function renderEngineMasterQuiz(container, items) {
+            const currentItem = items[state.activeQuestionIndex];
+            speakText(`Quiz Battle. ${currentItem.q}`);
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-white">Chhota Bot Mascot</p>
+                                <p class="text-[10px] text-purple-300">Answer fast to win!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center space-y-1">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase">Question ${state.activeQuestionIndex + 1} of ${items.length}</span>
+                        <h4 class="font-display font-bold text-xl text-white">${currentItem.q}</h4>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        ${currentItem.options.map(opt => `
+                            <button onclick="handleQuizAnswer('${opt}', '${currentItem.answer}')" class="p-4 rounded-2xl bg-white/10 hover:bg-purple-500/30 border border-white/15 text-white font-bold text-sm text-left flex items-center justify-between">
+                                <span>${opt}</span>
+                                <i class="fa-solid fa-bolt text-purple-300"></i>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleQuizAnswer(selected, correct) {
+            if (selected === correct) {
+                playSoundEffect('correct');
+                state.score += 10;
+                state.streak += 1;
+                advanceQuestionOrComplete();
+            } else {
+                playSoundEffect('wrong');
+                state.streak = 0;
+            }
+            updateEngineHUD();
+        }
+
+        /* Engine 5 */
+        function renderEngineFillPuzzle(container, items) {
+            const currentItem = items[state.activeQuestionIndex];
+            container.innerHTML = `
+                <div class="space-y-6 text-center">
+                    <h4 class="font-display font-bold text-xl text-white">${currentItem.q}</h4>
+
+                    <div class="bg-indigo-950/80 p-6 rounded-2xl border-2 border-dashed border-blue-400 max-w-sm mx-auto space-y-2">
+                        <p class="text-xs text-slate-400">Target Blank Slot</p>
+                        <div id="target-slot" class="min-h-[45px] rounded-xl bg-white/5 flex items-center justify-center text-gold font-bold text-lg">
+                            [ Select Answer Block ]
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-center gap-3 pt-2">
+                        ${currentItem.options.map(opt => `
+                            <button onclick="handleFillPuzzle('${opt}', '${currentItem.answer}')" class="px-5 py-3 rounded-2xl bg-blue-500/20 hover:bg-blue-500/40 border border-blue-400/40 text-blue-200 font-bold text-sm flex items-center space-x-2">
+                                <i class="fa-solid fa-puzzle-piece"></i>
+                                <span>${opt}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleFillPuzzle(selected, correct) {
+            document.getElementById('target-slot').innerText = selected;
+            if (selected === correct) {
+                playSoundEffect('correct');
+                state.score += 10;
+                state.streak += 1;
+                advanceQuestionOrComplete();
+            } else {
+                playSoundEffect('wrong');
+                state.streak = 0;
+            }
+            updateEngineHUD();
+        }
+
+        /* Engine 6 */
+        function renderEngineCreativeCanvas(container, items) {
+            const currentItem = items[state.activeQuestionIndex];
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h4 class="font-display font-bold text-lg text-white">Creative Canvas: ${currentItem.q}</h4>
+                        <div class="flex space-x-2">
+                            <button onclick="clearCanvas()" class="px-3 py-1.5 rounded-xl bg-white/10 text-xs font-bold text-white">Clear</button>
+                            <button onclick="completeCanvasTask()" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-coral to-gold text-xs font-bold text-indigo-950">Finish Drawing</button>
+                        </div>
+                    </div>
+
+                    <div class="relative bg-white rounded-2xl overflow-hidden h-[260px]">
+                        <canvas id="interactive-paint-canvas" class="w-full h-full cursor-crosshair"></canvas>
+                    </div>
+
+                    <div class="flex items-center justify-center space-x-3 pt-1">
+                        <button onclick="setBrushColor('#FF7A85')" class="w-8 h-8 rounded-full bg-coral ring-2 ring-white"></button>
+                        <button onclick="setBrushColor('#FFB800')" class="w-8 h-8 rounded-full bg-gold ring-2 ring-white"></button>
+                        <button onclick="setBrushColor('#2ECC71')" class="w-8 h-8 rounded-full bg-mint ring-2 ring-white"></button>
+                        <button onclick="setBrushColor('#1C1440')" class="w-8 h-8 rounded-full bg-indigo-900 ring-2 ring-white"></button>
+                    </div>
+                </div>
+            `;
+            setTimeout(initInteractiveCanvas, 100);
+        }
+
+        let canvasColor = '#FF7A85';
+        function setBrushColor(c) { canvasColor = c; }
+
+        function initInteractiveCanvas() {
+            const canvas = document.getElementById('interactive-paint-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            let drawing = false;
+
+            function startDraw(e) {
+                drawing = true;
+                ctx.beginPath();
+                const rect = canvas.getBoundingClientRect();
+                ctx.moveTo((e.clientX || e.touches[0].clientX) - rect.left, (e.clientY || e.touches[0].clientY) - rect.top);
+            }
+
+            function draw(e) {
+                if (!drawing) return;
+                const rect = canvas.getBoundingClientRect();
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = canvasColor;
+                ctx.lineTo((e.clientX || e.touches[0].clientX) - rect.left, (e.clientY || e.touches[0].clientY) - rect.top);
+                ctx.stroke();
+            }
+
+            function stopDraw() { drawing = false; }
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('touchstart', startDraw);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDraw);
+        }
+
+        function clearCanvas() {
+            const canvas = document.getElementById('interactive-paint-canvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function completeCanvasTask() {
+            playSoundEffect('correct');
+            state.score += 20;
+            triggerGameCompletion();
+        }
+
+        function advanceQuestionOrComplete() {
+            const grade = CURRICULUM_DATA[state.currentGradeKey];
+            const subject = grade.subjects.find(s => s.id === state.currentSubjectId);
+            const chapter = subject.chapters.find(c => c.id === state.currentChapterId);
+
+            setTimeout(() => {
+                if (state.activeQuestionIndex + 1 < chapter.items.length) {
+                    state.activeQuestionIndex++;
+                    renderEngineMode(state.activeGameMode, chapter.items);
+                } else {
+                    triggerGameCompletion();
+                }
+            }, 1000);
+        }
+
+        function updateEngineHUD() {
+            document.getElementById('game-score').innerText = state.score;
+            document.getElementById('game-streak').innerText = state.streak;
+        }
+
+        function speakCurrentQuestionInstruction() {
+            const grade = CURRICULUM_DATA[state.currentGradeKey];
+            const subject = grade.subjects.find(s => s.id === state.currentSubjectId);
+            const chapter = subject.chapters.find(c => c.id === state.currentChapterId);
+            speakText(chapter.items[state.activeQuestionIndex].q);
+        }
+
+        function showGameHint() {
+            const grade = CURRICULUM_DATA[state.currentGradeKey];
+            const subject = grade.subjects.find(s => s.id === state.currentSubjectId);
+            const chapter = subject.chapters.find(c => c.id === state.currentChapterId);
+            alert(`💡 HINT: ${chapter.items[state.activeQuestionIndex].hint}`);
+        }
+
+        function triggerGameCompletion() {
+            playSoundEffect('fanfare');
+            state.globalStars += 15;
+            state.globalXP += 150;
+            updateGlobalHUD();
+            openModal('celebration-modal');
+        }
+
+        function restartCurrentGame() { launchGameMode(state.activeGameMode); }
+        function exitGameEngine() { navigateTo('game-hub'); }
+
+        /* ==========================================================================
+           6. GRAND FINALE EXAM MODE ENGINE & CERTIFICATE GENERATOR
+           ========================================================================== */
+        function startGradeFinalExam() {
+            const grade = CURRICULUM_DATA[state.currentGradeKey];
+            document.getElementById('exam-grade-title').innerText = `${grade.name} Final Exam`;
+
+            let examPool = [];
+            grade.subjects.forEach(sub => {
+                sub.chapters.forEach(ch => {
+                    ch.items.forEach(item => {
+                        examPool.push({ ...item, subjectName: sub.name, subjectId: sub.id });
+                    });
+                });
+            });
+
+            examPool.sort(() => Math.random() - 0.5);
+            state.examQuestions = examPool.slice(0, 10);
+            state.examCurrentIndex = 0;
+            state.examAnswers = {};
+            state.examMarked = {};
+            state.examTimer = 12 * 60;
+            state.examPaused = false;
+
+            startExamTimerInterval();
+            renderExamQuestion();
+            renderExamPalette();
+            navigateTo('final-exam');
+        }
+
+        function startExamTimerInterval() {
+            if (state.examInterval) clearInterval(state.examInterval);
+            state.examInterval = setInterval(() => {
+                if (!state.examPaused) {
+                    state.examTimer--;
+                    const mins = Math.floor(state.examTimer / 60);
+                    const secs = state.examTimer % 60;
+                    document.getElementById('exam-timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+                    if (state.examTimer <= 0) {
+                        clearInterval(state.examInterval);
+                        submitFinalExam();
+                    }
+                }
+            }, 1000);
+        }
+
+        function toggleExamTimer() {
+            state.examPaused = !state.examPaused;
+            const icon = document.getElementById('exam-pause-icon');
+            icon.className = state.examPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause';
+        }
+
+        function renderExamQuestion() {
+            const q = state.examQuestions[state.examCurrentIndex];
+            document.getElementById('exam-q-subject').innerText = q.subjectName;
+            document.getElementById('exam-q-number').innerText = `Question ${state.examCurrentIndex + 1} of ${state.examQuestions.length}`;
+            document.getElementById('exam-q-text').innerText = q.q;
+
+            const container = document.getElementById('exam-options-container');
+            container.innerHTML = '';
+
+            const selected = state.examAnswers[state.examCurrentIndex];
+
+            q.options.forEach((opt, idx) => {
+                const isSelected = selected === opt;
+                container.innerHTML += `
+                    <button onclick="selectExamAnswer('${opt}')" class="p-4 rounded-2xl text-left font-bold text-sm transition-all border flex items-center justify-between ${
+                        isSelected ? 'bg-gold/30 border-gold text-gold shadow-md' : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                    }">
+                        <span>${String.fromCharCode(65 + idx)}. ${opt}</span>
+                        ${isSelected ? '<i class="fa-solid fa-circle-check"></i>' : ''}
+                    </button>
+                `;
+            });
+
+            const isMarked = state.examMarked[state.examCurrentIndex];
+            document.getElementById('exam-mark-btn').className = `px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 border ${
+                isMarked ? 'bg-purple-500 text-white border-purple-300' : 'bg-purple-500/20 text-purple-300 border-purple-400/30'
+            }`;
+        }
+
+        function selectExamAnswer(opt) {
+            state.examAnswers[state.examCurrentIndex] = opt;
+            renderExamQuestion();
+            renderExamPalette();
+        }
+
+        function markExamForReview() {
+            state.examMarked[state.examCurrentIndex] = !state.examMarked[state.examCurrentIndex];
+            renderExamQuestion();
+            renderExamPalette();
+        }
+
+        function navigateExamQuestion(dir) {
+            const newIdx = state.examCurrentIndex + dir;
+            if (newIdx >= 0 && newIdx < state.examQuestions.length) {
+                state.examCurrentIndex = newIdx;
+                renderExamQuestion();
+            }
+        }
+
+        function renderExamPalette() {
+            const grid = document.getElementById('exam-palette-grid');
+            grid.innerHTML = '';
+            let answeredCount = 0;
+
+            state.examQuestions.forEach((_, idx) => {
+                const isAns = state.examAnswers[idx] !== undefined;
+                const isMarked = state.examMarked[idx];
+                const isCurrent = state.examCurrentIndex === idx;
+
+                if (isAns) answeredCount++;
+
+                let bgClass = 'bg-white/10 border-white/20 text-white';
+                if (isMarked) bgClass = 'bg-purple-500 border-purple-300 text-white';
+                else if (isAns) bgClass = 'bg-mint border-mint text-indigo-950';
+
+                grid.innerHTML += `
+                    <button onclick="state.examCurrentIndex = ${idx}; renderExamQuestion();" class="w-10 h-10 rounded-xl font-bold text-xs border flex items-center justify-center transition-all ${bgClass} ${isCurrent ? 'ring-2 ring-gold' : ''}">
+                        ${idx + 1}
+                    </button>
+                `;
+            });
+
+            document.getElementById('exam-answered-count').innerText = `${answeredCount} / ${state.examQuestions.length} Answered`;
+        }
+
+        function speakExamQuestion() {
+            speakText(state.examQuestions[state.examCurrentIndex].q);
+        }
+
+        function exitExamPrompt() {
+            if (confirm("Are you sure you want to exit the Final Exam? Your progress will not be saved.")) {
+                if (state.examInterval) clearInterval(state.examInterval);
+                navigateTo('subjects');
+            }
+        }
+
+        function submitFinalExam() {
+            if (state.examInterval) clearInterval(state.examInterval);
+
+            let totalCorrect = 0;
+            let subjectScores = {};
+
+            state.examQuestions.forEach((q, idx) => {
+                if (!subjectScores[q.subjectName]) {
+                    subjectScores[q.subjectName] = { correct: 0, total: 0 };
+                }
+                subjectScores[q.subjectName].total++;
+
+                if (state.examAnswers[idx] === q.answer) {
+                    totalCorrect++;
+                    subjectScores[q.subjectName].correct++;
+                }
+            });
+
+            const percentage = Math.round((totalCorrect / state.examQuestions.length) * 100);
+
+            state.globalStars += 50;
+            state.globalXP += 300;
+            updateGlobalHUD();
+
+            document.getElementById('report-overall-score').innerText = `${percentage}%`;
+            document.getElementById('report-grade-rank').innerText = percentage >= 80 ? '1st Division' : percentage >= 50 ? '2nd Division' : 'Passed';
+            document.getElementById('report-stars-awarded').innerText = '+50 Stars';
+
+            const breakdownContainer = document.getElementById('report-subject-breakdown');
+            breakdownContainer.innerHTML = '';
+            Object.keys(subjectScores).forEach(sName => {
+                const s = subjectScores[sName];
+                const pct = Math.round((s.correct / s.total) * 100);
+                breakdownContainer.innerHTML += `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                        <span class="font-semibold text-white">${sName}</span>
+                        <span class="font-bold text-gold">${s.correct}/${s.total} (${pct}%)</span>
+                    </div>
+                `;
+            });
+
+            openModal('exam-report-modal');
+        }
+
+        function generatePrintableCertificate() {
+            const nameInput = document.getElementById('cert-student-name').value.trim() || 'Valued Student';
+            const grade = CURRICULUM_DATA[state.currentGradeKey];
+
+            document.getElementById('cert-display-name').innerText = nameInput;
+            document.getElementById('cert-display-grade').innerText = `For outstanding achievement in ${grade.name} Grand Final Exam`;
+
+            openModal('certificate-modal');
+        }
+
+        /* ==========================================================================
+           7. ENHANCED OFFLINE WORKSHEET GENERATOR ENGINE
+           ========================================================================== */
+        
+        function openGlobalWorksheetSelector() {
+            const gradeSelect = document.getElementById('ws-sel-grade');
+            gradeSelect.innerHTML = '';
+
+            Object.keys(CURRICULUM_DATA).forEach(gKey => {
+                const g = CURRICULUM_DATA[gKey];
+                gradeSelect.innerHTML += `<option value="${gKey}">${g.name}</option>`;
+            });
+
+            gradeSelect.value = state.currentGradeKey || 'nursery';
+            updateWorksheetSubjectDropdown();
+            openModal('global-worksheet-selector-modal');
+        }
+
+        function updateWorksheetSubjectDropdown() {
+            const gKey = document.getElementById('ws-sel-grade').value;
+            const grade = CURRICULUM_DATA[gKey];
+            const subSelect = document.getElementById('ws-sel-subject');
+            subSelect.innerHTML = `<option value="ALL_FINAL_EXAM">⭐ Full Comprehensive Final Exam Paper (20-30 Qs)</option>`;
+
+            grade.subjects.forEach(sub => {
+                subSelect.innerHTML += `<option value="${sub.id}">${sub.name}</option>`;
+            });
+
+            updateWorksheetChapterDropdown();
+        }
+
+        function updateWorksheetChapterDropdown() {
+            const gKey = document.getElementById('ws-sel-grade').value;
+            const subVal = document.getElementById('ws-sel-subject').value;
+            const chGroup = document.getElementById('ws-chapter-select-group');
+            const chSelect = document.getElementById('ws-sel-chapter');
+
+            if (subVal === 'ALL_FINAL_EXAM') {
+                chGroup.classList.add('hidden');
+            } else {
+                chGroup.classList.remove('hidden');
+                chSelect.innerHTML = '';
+                const grade = CURRICULUM_DATA[gKey];
+                const subject = grade.subjects.find(s => s.id === subVal);
+                if (subject) {
+                    subject.chapters.forEach(ch => {
+                        chSelect.innerHTML += `<option value="${ch.id}">${ch.title}</option>`;
+                    });
+                }
+            }
+        }
+
+        function generateCustomWorksheetFromSelector() {
+            const gKey = document.getElementById('ws-sel-grade').value;
+            const subVal = document.getElementById('ws-sel-subject').value;
+            const chVal = document.getElementById('ws-sel-chapter').value;
+
+            closeModal('global-worksheet-selector-modal');
+
+            if (subVal === 'ALL_FINAL_EXAM') {
+                generateGradeFinalExamWorksheet(gKey);
+            } else {
+                state.currentGradeKey = gKey;
+                state.currentSubjectId = subVal;
+                state.currentChapterId = chVal;
+                openCurrentChapterWorksheet();
+            }
+        }
+
+        function openCurrentChapterWorksheet() {
+            const grade = CURRICULUM_DATA[state.currentGradeKey];
+            const subject = grade.subjects.find(s => s.id === state.currentSubjectId);
+            const chapter = subject.chapters.find(c => c.id === state.currentChapterId);
+
+            renderWorksheetPaper({
+                title: `${chapter.title} Worksheet`,
+                subtitle: `${grade.name} | Subject: ${subject.name}`,
+                questions: chapter.items
+            });
+        }
+
+        function generateGradeFinalExamWorksheet(targetGradeKey = null) {
+            const gKey = targetGradeKey || state.currentGradeKey;
+            const grade = CURRICULUM_DATA[gKey];
+
+            let examPool = [];
+            grade.subjects.forEach(sub => {
+                sub.chapters.forEach(ch => {
+                    ch.items.forEach(item => {
+                        examPool.push({ ...item, subjectName: sub.name });
+                    });
+                });
+            });
+
+            // Duplicate to expand pool if necessary
+            if (examPool.length < 20) {
+                examPool = [...examPool, ...examPool];
+            }
+
+            examPool.sort(() => Math.random() - 0.5);
+            const selectedQuestions = examPool.slice(0, 20);
+
+            renderWorksheetPaper({
+                title: `${grade.name} Comprehensive Final Assessment Paper`,
+                subtitle: `${grade.name} | All Subjects Combined Assessment Sheet`,
+                questions: selectedQuestions
+            });
+        }
+
+        function renderWorksheetPaper(data) {
+            state.activeWorksheetData = data;
+
+            document.getElementById('ws-title').innerText = data.title;
+            document.getElementById('ws-subtitle').innerText = data.subtitle;
+            document.getElementById('ws-total-marks').innerText = data.questions.length;
+
+            const wsContainer = document.getElementById('ws-questions-container');
+            const keyGrid = document.getElementById('ws-answer-key-grid');
+            
+            wsContainer.innerHTML = '';
+            keyGrid.innerHTML = '';
+
+            data.questions.forEach((item, idx) => {
+                const subTag = item.subjectName ? `<span class="text-[10px] bg-slate-200 px-2 py-0.5 rounded text-slate-700 font-bold mr-2">${item.subjectName}</span>` : '';
+                
+                wsContainer.innerHTML += `
+                    <div class="border-b border-slate-200 pb-3 font-sans">
+                        <div class="flex items-start justify-between">
+                            <p class="font-bold text-slate-900 text-sm">
+                                Q${idx + 1}. ${subTag}${item.q}
+                            </p>
+                            <span class="text-[10px] text-slate-500 font-bold ml-2 shrink-0">(1 Mark)</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-xs text-slate-800 font-medium">
+                            ${item.options.map((opt, i) => `
+                                <div class="border border-slate-200 p-1.5 rounded bg-slate-50 flex items-center space-x-1.5">
+                                    <span class="w-4 h-4 rounded-full border border-slate-400 inline-block text-[9px] text-center leading-3 font-bold text-slate-600">${String.fromCharCode(65 + i)}</span>
+                                    <span>${opt}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                keyGrid.innerHTML += `
+                    <div class="p-1.5 border border-slate-300 rounded bg-white text-center">
+                        <span class="font-bold text-slate-500">Q${idx + 1}:</span> 
+                        <span class="font-black text-slate-900">${item.answer}</span>
+                    </div>
+                `;
+            });
+
+            openModal('worksheet-generator-modal');
+        }
+
+        function downloadWorksheetHTML() {
+            if (!state.activeWorksheetData) return;
+            const data = state.activeWorksheetData;
+
+            const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${data.title}</title>
+                <script src="https://cdn.tailwindcss.com"><\/script>
+                <style>body { font-family: sans-serif; padding: 20px; background: white; color: #000; }</style>
+            </head>
+            <body>
+                <div style="border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px;">
+                    <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase;">${data.title}</h1>
+                    <p style="font-size: 14px; color: #555;">${data.subtitle}</p>
+                    <p style="margin-top: 10px; font-size: 12px;">Student Name: _____________________ | Roll No: ________ | Score: ____ / ${data.questions.length}</p>
+                </div>
+                <div style="margin-bottom: 30px;">
+                    ${data.questions.map((q, idx) => `
+                        <div style="margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+                            <p style="font-weight: bold;">Q${idx + 1}. ${q.q}</p>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px; font-size: 13px;">
+                                ${q.options.map((opt, i) => `<div>[ &nbsp; ] ${String.fromCharCode(65 + i)}. ${opt}</div>`).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="border-top: 2px dashed #888; padding-top: 15px;">
+                    <h3 style="font-size: 14px; font-weight: bold;">Teacher Answer Key:</h3>
+                    <p style="font-size: 12px; font-family: monospace; margin-top: 5px;">
+                        ${data.questions.map((q, idx) => `[Q${idx + 1}: ${q.answer}] `).join(' ')}
+                    </p>
+                </div>
+            </body>
+            </html>
+            `;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${data.title.replace(/[^a-z0-0]/gi, '_').toLowerCase()}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        /* Modal Helpers */
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function switchModalTab(tabName) {
+            if (tabName === 'badges') {
+                document.getElementById('tab-panel-badges').classList.remove('hidden');
+                document.getElementById('tab-panel-leaderboard').classList.add('hidden');
+                document.getElementById('tab-btn-badges').className = 'pb-2 px-4 border-b-2 border-coral font-bold text-sm text-coral';
+                document.getElementById('tab-btn-leaderboard').className = 'pb-2 px-4 border-b-2 border-transparent font-bold text-sm text-slate-400 hover:text-white';
+            } else {
+                document.getElementById('tab-panel-badges').classList.add('hidden');
+                document.getElementById('tab-panel-leaderboard').classList.remove('hidden');
+                document.getElementById('tab-btn-badges').className = 'pb-2 px-4 border-b-2 border-transparent font-bold text-sm text-slate-400 hover:text-white';
+                document.getElementById('tab-btn-leaderboard').className = 'pb-2 px-4 border-b-2 border-coral font-bold text-sm text-coral';
+            }
+        }
+    </script>
+</body>
+</html>
